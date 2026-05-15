@@ -8,11 +8,11 @@ setup(
     python_requires=">=3.8",
     author="Quefly",
     url="https://github.com/queflyhq/authfi-python-sdk",
-    license="MIT",
+    license="Apache-2.0",
     classifiers=[
         "Framework :: Flask",
         "Framework :: FastAPI",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
     ],
 )
