@@ -100,40 +100,29 @@ class AuthFI:
         if len(parts) != 3:
             raise AuthFIError("Invalid token format")
 
-        # Try PyJWT with full RS256 verification
+        # RS256 signature verification via PyJWT is REQUIRED. There is NO
+        # unverified fallback — accepting an unverified token is an auth bypass.
         try:
             import jwt
             from jwt import PyJWKClient
+        except ImportError as e:
+            raise AuthFIError(
+                "PyJWT is required for token verification. "
+                "Install with: pip install 'PyJWT[crypto]'"
+            ) from e
 
-            jwks_url = f"{self._auth_url}/.well-known/jwks.json"
+        jwks_url = f"{self._auth_url}/.well-known/jwks.json"
+        try:
             jwks_client = PyJWKClient(jwks_url)
             signing_key = jwks_client.get_signing_key_from_jwt(token)
-            payload = jwt.decode(
+            return jwt.decode(
                 token,
                 signing_key.key,
-                algorithms=["RS256"],
+                algorithms=["RS256"],  # pin RS256; blocks alg:none / HS256 confusion
                 options={"verify_aud": False},
             )
-            return payload
-        except ImportError:
-            pass  # PyJWT not installed, fall back
-
-        # Fallback: decode without signature verification (NOT FOR PRODUCTION)
-        import warnings
-        warnings.warn(
-            "PyJWT not installed — token signature NOT verified. "
-            "Install with: pip install PyJWT[crypto]",
-            UserWarning,
-            stacklevel=2,
-        )
-
-        header = json.loads(_b64decode(parts[0]))
-        payload = json.loads(_b64decode(parts[1]))
-
-        if payload.get("exp", 0) < time.time():
-            raise AuthFIError("Token expired")
-
-        return payload
+        except jwt.PyJWTError as e:
+            raise AuthFIError(f"Token verification failed: {e}") from e
 
     # --- Permission registration ---
 
