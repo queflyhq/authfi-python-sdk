@@ -51,7 +51,7 @@ class AuthFI:
         self,
         tenant,
         api_key,
-        api_url="https://api.authfi.app",
+        api_url="https://api.authfi.io",
         application_id=None,
         client_secret=None,
         auto_sync=True,

@@ -12,7 +12,7 @@ class TestAuthFIInit(unittest.TestCase):
     def test_defaults(self):
         auth = AuthFI(tenant="acme", api_key="sk_test")
         self.assertEqual(auth.tenant, "acme")
-        self.assertEqual(auth.api_url, "https://api.authfi.app")
+        self.assertEqual(auth.api_url, "https://api.authfi.io")
         self.assertEqual(auth.jwks_ttl, 300)
         self.assertTrue(auth.auto_sync)
 
@@ -22,11 +22,11 @@ class TestAuthFIInit(unittest.TestCase):
 
     def test_manage_url(self):
         auth = AuthFI(tenant="acme", api_key="sk_test")
-        self.assertEqual(auth._manage_url, "https://api.authfi.app/manage/v1/acme")
+        self.assertEqual(auth._manage_url, "https://api.authfi.io/manage/v1/acme")
 
     def test_auth_url(self):
         auth = AuthFI(tenant="acme", api_key="sk_test")
-        self.assertEqual(auth._auth_url, "https://api.authfi.app/v1/acme")
+        self.assertEqual(auth._auth_url, "https://api.authfi.io/v1/acme")
 
 
 class TestTokenVerification(unittest.TestCase):
