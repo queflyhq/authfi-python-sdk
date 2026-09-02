@@ -22,11 +22,14 @@ class TestAuthFIInit(unittest.TestCase):
 
     def test_manage_url(self):
         auth = AuthFI(tenant="acme", api_key="sk_test")
-        self.assertEqual(auth._manage_url, "https://api.authfi.io/manage/v1/acme")
+        # The edge dispatch is /<slug>/<path> — slug FIRST — and no /manage/ prefix exists.
+        self.assertEqual(auth._manage_url, "https://api.authfi.io/acme/v1")
 
     def test_auth_url(self):
         auth = AuthFI(tenant="acme", api_key="sk_test")
-        self.assertEqual(auth._auth_url, "https://api.authfi.io/v1/acme")
+        self.assertEqual(auth._auth_url, "https://api.authfi.io/acme/v1")
+        # JWKS hangs off the tenant ROOT, not /v1 — the distinction the transposition hid.
+        self.assertEqual(auth._tenant_base, "https://api.authfi.io/acme")
 
 
 class TestTokenVerification(unittest.TestCase):

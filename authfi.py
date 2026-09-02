@@ -70,12 +70,23 @@ class AuthFI:
         self._registered_permissions = {}
 
     @property
+    def _tenant_base(self):
+        """The tenant's base on the shared API host.
+
+        The edge dispatch is api.authfi.io/<slug>/<path> — the SLUG COMES FIRST. Root-level
+        protocol paths (JWKS, OIDC discovery, /oauth/*) hang directly off this; API routes add
+        /v1. Getting the two confused is how the JWKS URL ends up under /v1 and 404s.
+        """
+        return f"{self.api_url}/{self.tenant}"
+
+    @property
     def _manage_url(self):
-        return f"{self.api_url}/manage/v1/{self.tenant}"
+        # No /manage/ prefix exists on the platform; those routes are /v1/* like the rest.
+        return f"{self._tenant_base}/v1"
 
     @property
     def _auth_url(self):
-        return f"{self.api_url}/v1/{self.tenant}"
+        return f"{self._tenant_base}/v1"
 
     # --- JWKS ---
 
@@ -84,7 +95,7 @@ class AuthFI:
         if self._jwks and now - self._jwks_fetched < self.jwks_ttl:
             return self._jwks
 
-        req = Request(f"{self._auth_url}/.well-known/jwks.json")
+        req = Request(f"{self._tenant_base}/.well-known/jwks.json")
         with urlopen(req) as res:
             self._jwks = json.loads(res.read())
             self._jwks_fetched = now
@@ -111,7 +122,7 @@ class AuthFI:
                 "Install with: pip install 'PyJWT[crypto]'"
             ) from e
 
-        jwks_url = f"{self._auth_url}/.well-known/jwks.json"
+        jwks_url = f"{self._tenant_base}/.well-known/jwks.json"
         try:
             jwks_client = PyJWKClient(jwks_url)
             signing_key = jwks_client.get_signing_key_from_jwt(token)
@@ -265,7 +276,7 @@ class AuthFI:
         if not self.application_id or not self.client_secret:
             raise AuthFIError("application_id and client_secret required for cloud credentials")
 
-        url = f"{self.api_url}/v1/{self.tenant}/cloud/credentials"
+        url = f"{self._tenant_base}/v1/credentials"
         body = {"provider": provider, "ttl": ttl}
         if role_arn: body["role_arn"] = role_arn
         if project: body["project"] = project
@@ -292,7 +303,7 @@ class AuthFI:
         if not self.application_id or not self.client_secret:
             raise AuthFIError("application_id and client_secret required for cloud token")
 
-        url = f"{self.api_url}/v1/{self.tenant}/cloud/token"
+        url = f"{self._tenant_base}/v1/credentials/token"
         req = Request(url, method="POST")
         req.add_header("Content-Type", "application/json")
         req.add_header("Authorization", f"Bearer {user_token}")
